@@ -1,6 +1,8 @@
+"""Mapeamentos de entrada estáticos para Teclado e Joysticks."""
+
 import pygame as pg
 
-# --- Traduções amigáveis para as ações do jogo ---
+# Traduções amigáveis para as ações do jogo
 ACTION_LABELS = {
     "up": "Cima",
     "down": "Baixo",
@@ -26,22 +28,34 @@ KEYBOARD_PROFILES = {
     },
 }
 
-# --- Controle Genérico (D-PAD e Analógico Esquerdo) ---
-JOYSTICK_GENERIC = {
+# --- Perfis de Joystick com suporte a Analógico (Axes) e D-PAD (Hats) ---
+
+JOYSTICK_XBOX = {
+    "name": "Xbox / X-Input",
     "axes": {
-        0: {"neg": "left", "pos": "right"},  # Analógico X
-        1: {
-            "neg": "up",
-            "pos": "down",
-        },  # Analógico Y (Atenção à inversão de eixo do Pygame)
+        0: {"neg": "left", "pos": "right"},  # Analógico Esq. X
+        1: {"neg": "up", "pos": "down"},  # Analógico Esq. Y
     },
-    "buttons": {
-        # D-PAD (se for lido como botões em alguns controles)
-        11: "up",
-        12: "down",
-        13: "left",
-        14: "right",
+    "hats": {0: True},  # Habilita a leitura do D-PAD (Hat 0)
+}
+
+JOYSTICK_PLAYSTATION = {
+    "name": "PS4 / PS5",
+    "axes": {
+        0: {"neg": "left", "pos": "right"},
+        1: {"neg": "up", "pos": "down"},
     },
+    "hats": {0: True},
+}
+
+#  Controle Genérico (D-PAD e Analógico Esquerdo)
+JOYSTICK_GENERIC = {
+    "name": "Genérico",
+    "axes": {
+        0: {"neg": "left", "pos": "right"},
+        1: {"neg": "up", "pos": "down"},
+    },
+    "hats": {0: True},
 }
 
 
