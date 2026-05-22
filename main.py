@@ -2,11 +2,16 @@ import turtle
 import time
 import random
 
-DELAY = 0.1
+# Constants
+delay = 0.1
+
+# Variables
+score = 0
+high_score = 0
 
 # Screen Setup
 WN = turtle.Screen()
-WN.title("Snake Ganme")
+WN.title("Snake Ganme - turtle")
 WN.bgcolor("green")
 WN.setup(width=600, height=600)
 WN.tracer(0)  # turns off screen updates
@@ -30,6 +35,20 @@ food.goto(0, 100)
 
 # Snake segments
 segments = []
+
+# Pen
+pen = turtle.Turtle()
+pen.speed(0)
+pen.shape("square")
+pen.color("white")
+pen.penup()
+pen.hideturtle()
+pen.goto(0, 260)
+pen.write(
+    f"Score: {score} | High Score: {high_score}",
+    align="center",
+    font=("Courier", 24, "normal"),
+)
 
 
 # Functions
@@ -92,6 +111,16 @@ while True:
             seg.goto(1_000, 1_000)
         segments.clear()
 
+        # --- RESET Game State
+        delay = 0.1
+        score = 0
+        pen.clear()
+        pen.write(
+            f"Score: {score} | High Score: {high_score}",
+            align="center",
+            font=("Courier", 24, "normal"),
+        )
+
     # --- COLLISION: snake VS food
     if head.distance(food) < 20:
         # move food to random spot on screen
@@ -106,6 +135,21 @@ while True:
         new_seg.color("grey")
         new_seg.penup()
         segments.append(new_seg)
+
+        # shorten the delay
+        delay -= 0.001
+
+        # increase score
+        score += 10
+        if score > high_score:
+            high_score = score
+
+        pen.clear()
+        pen.write(
+            f"Score: {score} | High Score: {high_score}",
+            align="center",
+            font=("Courier", 24, "normal"),
+        )
 
     # Move segments from last to first
     for i in range(len(segments) - 1, 0, -1):
@@ -133,6 +177,16 @@ while True:
                 seg.goto(1_000, 1_000)
             segments.clear()
 
-    time.sleep(DELAY)
+            # --- RESET Game State
+            delay = 0.1
+            score = 0
+            pen.clear()
+            pen.write(
+                f"Score: {score} | High Score: {high_score}",
+                align="center",
+                font=("Courier", 24, "normal"),
+            )
+
+    time.sleep(delay)
 
 WN.mainloop()
