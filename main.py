@@ -75,11 +75,24 @@ WN.onkeypress(go_right, "d")
 while True:
     WN.update()
 
+    # snake VS Screen Border
+    if (head.xcor() > 290 or head.xcor() < -290) or (
+        head.ycor() > 290 or head.ycor() < -290
+    ):
+        time.sleep(1)
+        head.goto(0, 0)
+        head.direction = "stop"
+
+        # hide segments
+        for seg in segments:
+            seg.goto(1_000, 1_000)
+        segments.clear()
+
     # snake VS food
     if head.distance(food) < 20:
         # move food to random spot on screen
-        x = random.randint(-250, 250)
-        y = random.randint(-250, 250)
+        x = random.randint(-290, 290)
+        y = random.randint(-290, 290)
         food.goto(x, y)
 
         # add segment
