@@ -34,19 +34,23 @@ segments = []
 
 # Functions
 def go_up():
-    head.direction = "up"
+    if head.direction != "down":
+        head.direction = "up"
 
 
 def go_down():
-    head.direction = "down"
+    if head.direction != "up":
+        head.direction = "down"
 
 
 def go_left():
-    head.direction = "left"
+    if head.direction != "right":
+        head.direction = "left"
 
 
 def go_right():
-    head.direction = "right"
+    if head.direction != "left":
+        head.direction = "right"
 
 
 def move():
@@ -75,7 +79,7 @@ WN.onkeypress(go_right, "d")
 while True:
     WN.update()
 
-    # snake VS Screen Border
+    # --- COLLISION: snake VS Screen Border
     if (head.xcor() > 290 or head.xcor() < -290) or (
         head.ycor() > 290 or head.ycor() < -290
     ):
@@ -88,7 +92,7 @@ while True:
             seg.goto(1_000, 1_000)
         segments.clear()
 
-    # snake VS food
+    # --- COLLISION: snake VS food
     if head.distance(food) < 20:
         # move food to random spot on screen
         x = random.randint(-290, 290)
@@ -116,6 +120,18 @@ while True:
         segments[0].goto(x, y)
 
     move()
+
+    # --- COLLISION: snake VS segments
+    for seg in segments:
+        if seg.distance(head) < 20:
+            time.sleep(1)
+            head.goto(0, 0)
+            head.direction = "stop"
+
+            # hide segments
+            for seg in segments:
+                seg.goto(1_000, 1_000)
+            segments.clear()
 
     time.sleep(DELAY)
 
