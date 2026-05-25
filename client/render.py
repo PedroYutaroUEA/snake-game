@@ -7,7 +7,7 @@ from core import config as C
 from core.entities.food import Food
 from core.entities.snake import Snake
 from core.scene import SceneState
-from core.utils import draw_circle, draw_rect, draw_text
+from core.utils import draw_circle, draw_rect, draw_text, draw_overlay, draw_panel
 from client.input import profiles as P
 
 
@@ -106,29 +106,26 @@ class Renderer:
         color = self.config.PLAYER_COLORS.get(pid, self.config.WHITE)
         eliminated = life_count <= 0
 
-        # Fundo Translúcido
-        bg = pg.Surface((pw, ph), pg.SRCALPHA)
-        bg.fill((0, 0, 0, 160))
-        self.screen.blit(bg, (x, y))
-
-        # Borda e Barra de Título
+        # --- Fundo e Borda usando draw_panel ---
         border_color = (80, 80, 80) if eliminated else color
-        pg.draw.rect(self.screen, border_color, (x, y, pw, ph), 1)
+        rect = pg.Rect(x, y, pw, ph)
+        draw_panel(self.screen, rect, (0, 0, 0, 160), border_color, 1)
 
-        bar_h = 20
-        bar_surf = pg.Surface((pw, bar_h), pg.SRCALPHA)
+        # --- Barra de Título ---
+        bar_rect = pg.Rect(x, y, pw, 20)
         r, g, b = color
-        bar_surf.fill((r, g, b, 60 if eliminated else 110))
-        self.screen.blit(bar_surf, (x, y))
+        bar_bg = (r, g, b, 60) if eliminated else (r, g, b, 110)
+        draw_panel(self.screen, bar_rect, bar_bg, border_color, 0)
 
         draw_text(self.screen, self.font, f"PLAYER {pid}", (x + 8, y + 1), color)
 
+        # --- Textos ---
         if eliminated:
             draw_text(
                 self.screen,
                 self.font,
                 "ELIMINATED",
-                (x + pw // 2, y + bar_h + 10),
+                (x + pw // 2, y + 30),
                 (200, 60, 60),
                 center=True,
             )
@@ -137,10 +134,10 @@ class Renderer:
                 self.screen,
                 self.font,
                 f"{score:07d}",
-                (x + 8, y + bar_h + 4),
+                (x + 8, y + 24),
                 self.config.WHITE,
             )
-            self._draw_life_icons(x + 8, y + bar_h + 24, life_count, color)
+            self._draw_life_icons(x + 8, y + 44, life_count, color)
 
     def _draw_life_icons(self, x: int, y: int, count: int, color: tuple) -> None:
         """Desenha as vidas como pequenos quadrados (lembrando blocos da cobra)."""
@@ -323,9 +320,7 @@ class Renderer:
 
         # Efeito de escurecer a tela progressivamente
         fade_alpha = min(200, int(elapsed * 340))
-        fade = pg.Surface((self.config.WIDTH, self.config.HEIGHT), pg.SRCALPHA)
-        fade.fill((0, 0, 0, fade_alpha))
-        self.screen.blit(fade, (0, 0))
+        draw_overlay(self.screen, alpha=fade_alpha)
 
         content_alpha = max(0, min(255, int((elapsed - 0.35) * 510)))
         if content_alpha == 0:
@@ -334,61 +329,56 @@ class Renderer:
         medium_font = pg.font.SysFont(self.config.FONT_NAME, 22)
 
         # --- Título ---
-        title_color = (255, 80, 80)
-        title_surf = self.big.render("GAME  OVER", True, title_color)
-        title_surf.set_alpha(content_alpha)
-        self.screen.blit(title_surf, (cx - title_surf.get_width() // 2, 60))
+        draw_text(
+            self.screen, self.big, "GAME OVER", (cx, 80), (255, 80, 80), center=True
+        )
 
         # --- Ranking ---
-        rank_y = 180
-        rank_header = medium_font.render(
-            "RANKING FINAL DE MAÇÃS", True, (180, 200, 180)
+        draw_text(
+            self.screen,
+            medium_font,
+            "RANKING FINAL DE MAÇÃS",
+            (cx, 180),
+            (180, 200, 180),
+            center=True,
         )
-        rank_header.set_alpha(content_alpha)
-        self.screen.blit(rank_header, (cx - rank_header.get_width() // 2, rank_y))
 
         sorted_pids = sorted(scores.keys(), key=lambda p: scores[p], reverse=True)
         row_h = 38
         row_w = 400
-        row_x = cx - row_w // 2
 
         for rank, pid in enumerate(sorted_pids, start=1):
-            ry = rank_y + 40 + (rank - 1) * (row_h + 6)
+            ry = 220 + (rank - 1) * (row_h + 6)
             player_color = self.config.PLAYER_COLORS.get(pid, self.config.WHITE)
 
-            row_bg = pg.Surface((row_w, row_h), pg.SRCALPHA)
-            row_bg.fill((255, 255, 255, 8) if rank == 1 else (0, 0, 0, 60))
-            row_bg.set_alpha(content_alpha)
-            self.screen.blit(row_bg, (row_x, ry))
+            # --- Uso do draw_panel para as linhas de ranking ---
+            row_rect = pg.Rect(cx - row_w // 2, ry, row_w, row_h)
+            bg_color = (255, 255, 255, 15) if rank == 1 else (0, 0, 0, 80)
+            draw_panel(self.screen, row_rect, bg_color, player_color, 1)
 
-            # Borda do jogador
-            pg.draw.rect(self.screen, player_color, (row_x, ry, row_w, row_h), 1)
-
-            # Informações da linha
             draw_text(
                 self.screen,
                 medium_font,
-                f"#{rank}  PLAYER {pid}",
-                (row_x + 15, ry + 10),
+                f"#{rank} PLAYER {pid}",
+                (row_rect.x + 15, ry + 10),
                 player_color,
             )
 
-            # Tamanho da cobra e Score
-            apples_eaten = scores[pid] // getattr(self.config, "SCORE_PER_FOOD", 10)
-            snake_length = getattr(self.config, "STARTING_SEGMENTS", 3) + apples_eaten
+            apples = scores[pid] // getattr(self.config, "SCORE_PER_FOOD", 10)
+            length = getattr(self.config, "STARTING_SEGMENTS", 3) + apples
 
             draw_text(
                 self.screen,
                 medium_font,
-                f"Tam: {snake_length}",
-                (row_x + 200, ry + 10),
+                f"Tam: {length}",
+                (row_rect.x + 200, ry + 10),
                 (200, 200, 200),
             )
             draw_text(
                 self.screen,
                 medium_font,
                 f"{scores[pid]:05d} PTS",
-                (row_x + 300, ry + 10),
+                (row_rect.x + 300, ry + 10),
                 (255, 215, 60),
             )
 

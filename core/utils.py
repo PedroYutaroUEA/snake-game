@@ -73,3 +73,33 @@ def draw_text(
     label = font.render(text, True, color)
     rect = label.get_rect(center=pos) if center else label.get_rect(topleft=pos)
     surface.blit(label, rect)
+
+
+# --- Utilitários de Interface (UI) ---
+
+
+def draw_overlay(
+    surface: pg.Surface, alpha: int = 160, color: tuple = (0, 0, 0)
+) -> None:
+    """Desenha uma camada translúcida sobre toda a tela (Útil para fades e overlays)."""
+    overlay = pg.Surface(surface.get_size(), pg.SRCALPHA)
+    overlay.fill((*color[:3], alpha))
+    surface.blit(overlay, (0, 0))
+
+
+def draw_panel(
+    surface: pg.Surface,
+    rect: pg.Rect,
+    bg_color: tuple,
+    border_color: tuple,
+    border_w: int = 1,
+) -> None:
+    """Desenha um painel UI clássico com fundo translúcido (RGBA) e borda sólida."""
+    # Fundo Translúcido
+    bg = pg.Surface((rect.width, rect.height), pg.SRCALPHA)
+    bg.fill(bg_color)
+    surface.blit(bg, rect.topleft)
+
+    # Borda
+    if border_w > 0:
+        pg.draw.rect(surface, border_color, rect, border_w)
