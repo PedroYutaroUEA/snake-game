@@ -54,20 +54,49 @@ class Renderer:
             if drawer is not None:
                 drawer(sprite)
 
+        # --- Desenha a prévia fantasma e o cronômetro no mapa ---
+        if hasattr(world, "respawn_timers"):
+            for pid, timer in world.respawn_timers.items():
+                pos, _ = world.get_start_pos_and_dir(pid)
+                self._draw_spawn_preview(pid, pos, timer)
+
+    def _draw_spawn_preview(self, pid: int, pos: pg.math.Vector2, timer: float) -> None:
+        """Renderiza um bloco fantasma pulsante onde o jogador irá nascer."""
+        color = self.config.PLAYER_COLORS.get(pid, self.config.WHITE)
+        rect = pg.Rect(
+            int(pos.x), int(pos.y), self.config.GRID_SIZE, self.config.GRID_SIZE
+        )
+
+        ghost = pg.Surface((rect.width, rect.height), pg.SRCALPHA)
+        alpha = int(70 + 50 * math.sin(pg.time.get_ticks() * 0.01))
+        ghost.fill((*color, alpha))
+
+        self.screen.blit(ghost, rect.topleft)
+        draw_text(
+            self.screen,
+            self.font,
+            f"{timer:.1f}s",
+            (pos.x + 10, pos.y - 12),
+            color,
+            center=True,
+        )
+
     def draw_hud(
         self,
         scores: dict,
         lives: dict,
         state: SceneState,
         snakes: dict,
+        respawn_timers: dict,
     ) -> None:
-        """Desenha os painéis informativos no overlay da tela."""
         if state != SceneState.PLAY:
             return
 
-        self._draw_player_panels(scores, lives, snakes)
+        self._draw_player_panels(scores, lives, snakes, respawn_timers)
 
-    def _draw_player_panels(self, scores: dict, lives: dict, snakes: dict) -> None:
+    def _draw_player_panels(
+        self, scores: dict, lives: dict, snakes: dict, respawn_timers: dict
+    ) -> None:
         """Renderiza um painel HUD dinâmico para cada jogador."""
         pids = sorted(scores.keys())
         if not pids:
@@ -89,7 +118,7 @@ class Renderer:
             qpos = quadrant_positions[idx % 4]
             snake = snakes.get(pid)
             self._draw_single_player_panel(
-                pid, qpos, pw, ph, scores[pid], lives[pid], snake
+                pid, qpos, pw, ph, scores[pid], lives[pid], respawn_timers
             )
 
     def _draw_single_player_panel(
@@ -100,7 +129,7 @@ class Renderer:
         ph: int,
         score: int,
         life_count: int,
-        snake: Snake | None,
+        respawn_timers: dict,
     ) -> None:
         x, y = pos
         color = self.config.PLAYER_COLORS.get(pid, self.config.WHITE)
@@ -121,14 +150,25 @@ class Renderer:
 
         # --- Textos ---
         if eliminated:
-            draw_text(
-                self.screen,
-                self.font,
-                "ELIMINATED",
-                (x + pw // 2, y + 30),
-                (200, 60, 60),
-                center=True,
-            )
+            if pid in respawn_timers:
+                timer_val = respawn_timers[pid]
+                draw_text(
+                    self.screen,
+                    self.font,
+                    f"RESPAWN: {timer_val:.1f}s",
+                    (x + pw // 2, y + 34),
+                    (220, 220, 100),
+                    center=True,
+                )
+            else:
+                draw_text(
+                    self.screen,
+                    self.font,
+                    "ELIMINATED",
+                    (x + pw // 2, y + 34),
+                    (200, 60, 60),
+                    center=True,
+                )
         else:
             draw_text(
                 self.screen,
@@ -149,6 +189,11 @@ class Renderer:
     def _draw_snake(self, snake: Snake) -> None:
         if not snake.alive:
             return
+
+        if getattr(snake, "invuln_timer", 0) > 0:
+            # Pula a renderização a cada 100ms (cria efeito de piscar)
+            if int(snake.invuln_timer * 10) % 2 == 0:
+                return
 
         base_color = self.config.PLAYER_COLORS.get(snake.player_id, self.config.WHITE)
 
@@ -256,7 +301,7 @@ class Renderer:
 
         col_w = self.config.WIDTH // 3
         for col_idx, (header, hcolor, rows) in enumerate(sections):
-            col_x = col_idx * col_w + col_w // 2
+            col_x = col_idx * (col_w * 0.7) + (col_w // 0.7) // 2
             draw_text(
                 self.screen, label_font, header, (col_x, guide_y), hcolor, center=True
             )

@@ -54,27 +54,28 @@ class World:
 
     def spawn_player(self, player_id: C.PlayerId) -> None:
         """Spawna uma cobra em sua posição inicial baseada no ID."""
-        start_pos = self._get_start_pos(player_id)
-        snake = Snake(player_id, start_pos)
+        start_pos, start_dir = self.get_start_pos_and_dir(player_id)
+        snake = Snake(player_id, start_pos, start_dir)
         self.snakes[player_id] = snake
         self.all_sprites.add(snake)
 
-    def _get_start_pos(self, pid: C.PlayerId) -> Vec:
-        """Define posições fixas nos quadrantes para evitar colisões no nascimento."""
+    def get_start_pos_and_dir(self, pid: C.PlayerId) -> tuple[Vec, Vec]:
+        """Define posições e direções iniciais apontando o fluxo para o centro."""
         offset = C.GRID_SIZE * 5
-        offsets = {
-            1: (offset, offset),  # Top-Left
-            2: (C.WIDTH - offset, C.HEIGHT - offset),  # Bottom-Right
-            3: (C.WIDTH - offset, offset),  # Top-Right
-            4: (offset, C.HEIGHT - offset),  # Bottom-Left
+        # Mapeamento: (pos_x, pos_y, dir_x, dir_y)
+        # P1(TopEsq -> Dir), P2(BotDir -> Esq), P3(TopDir -> Baixo), P4(BotEsq -> Cima)
+        configs = {
+            1: (offset, offset, C.GRID_SIZE, 0),
+            2: (C.WIDTH - offset, C.HEIGHT - offset, -C.GRID_SIZE, 0),
+            3: (C.WIDTH - offset, offset, 0, C.GRID_SIZE),
+            4: (offset, C.HEIGHT - offset, 0, -C.GRID_SIZE),
         }
-        ox, oy = offsets.get(pid, (C.WIDTH // 2, C.HEIGHT // 2))
 
-        # Garante que a posição inicial esteja perfeitamente alinhada à malha
+        ox, oy, dx, dy = configs.get(pid, (C.WIDTH // 2, C.HEIGHT // 2, C.GRID_SIZE, 0))
         ox = (ox // C.GRID_SIZE) * C.GRID_SIZE
         oy = (oy // C.GRID_SIZE) * C.GRID_SIZE
 
-        return Vec(ox, oy)
+        return Vec(ox, oy), Vec(dx, dy)
 
     def spawn_food(self) -> None:
         """Spawna uma maçã garantindo que não caia dentro do corpo de uma cobra."""
@@ -107,6 +108,10 @@ class World:
 
         # 2. Resolve penalidades de tempo (Delay de morte)
         self._update_timers(dt)
+
+        for snake in self.snakes.values():
+            if snake.alive:
+                snake.update(dt)
 
         # 3. Avança a física e colisões apenas quando o tick estourar
         self.tick_timer += dt
