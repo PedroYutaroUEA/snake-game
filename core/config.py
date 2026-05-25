@@ -37,12 +37,6 @@ GRAY = (170, 170, 170)
 FOOD_COLOR = (250, 75, 25)  # Cor avermelhada da maçã
 GRID_COLOR = (20, 30, 20)  # Cor sutil para desenhar as linhas de grade (opcional)
 
-# --- Audio mixer settings ---
-AUDIO_FREQUENCY = 44100
-AUDIO_SIZE = -16
-AUDIO_CHANNELS = 2
-AUDIO_BUFFER = 512
-
 # --- UI layout ---
 FONT_SIZE_SMALL = 22
 FONT_SIZE_LARGE = 64
@@ -50,7 +44,19 @@ FONT_NAME = "consolas"
 
 RANDOM_SEED = None
 
+# --- Audio mixer settings ---
+AUDIO_FREQUENCY = 44100
+AUDIO_SIZE = -16
+AUDIO_CHANNELS = 2
+AUDIO_BUFFER = 512
+
 # Paths (work from any execution directory).
 # config.py lives in core/, so we go one level up to the project root.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOUND_PATH = os.path.join(BASE_DIR, "assets", "sounds")
+
+# Sounds
+HIT_BOUNDARY = "hit_boundary.wav"  # Death sound when a player hits the map boundary
+HIT_PLAYER = "hit_player.wav"  # Death sound when a player kills himself/another one
+EAT_1 = "eat_1.wav"  # Food eat sfx for players 1 and 3
+EAT_2 = "eat_2.wav"  # Food eat sfx for players 2 and 4

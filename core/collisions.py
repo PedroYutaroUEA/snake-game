@@ -111,9 +111,8 @@ class CollisionManager:
                 if head_pos == food.pos:
                     result.food_eaten.append(food)
                     result.snakes_to_grow.append(snake.player_id)
-
                     # Adiciona a pontuação base configurada
                     result.score_deltas[snake.player_id] = result.score_deltas.get(
                         snake.player_id, 0
                     ) + getattr(C, "SCORE_PER_FOOD", 10)
-                    result.events.append("food_eaten")
+                    result.events.append(f"food_eaten_{snake.player_id}")
