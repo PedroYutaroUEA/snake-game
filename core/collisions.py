@@ -59,11 +59,15 @@ class CollisionManager:
         for snake in snakes.values():
             if not snake.alive:
                 continue
+            if getattr(snake, "invuln_timer", 0) > 0:
+                continue
 
             head_pos = snake.segments[0]
 
             for other_snake in snakes.values():
                 if not other_snake.alive:
+                    continue
+                if getattr(other_snake, "invuln_timer", 0) > 0:
                     continue
 
                 # Se estivermos checando a cobra contra ela mesma, pulamos o índice 0 (cabeça)

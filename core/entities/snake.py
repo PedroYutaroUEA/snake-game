@@ -9,23 +9,22 @@ import core.config as C
 class Snake(Entity):
     """Representa um jogador (Cobra) composto por múltiplos segmentos."""
 
-    def __init__(self, player_id: C.PlayerId, start_pos: Vec):
+    def __init__(self, player_id: C.PlayerId, start_pos: Vec, start_dir: Vec) -> None:
         self.r = C.GRID_SIZE // 2
         self.pos = Vec(start_pos)
         super().__init__()
 
         self.player_id = player_id
         self.alive = True
+        self.invuln_timer = 2.0  # 2 Segundos de Invencibilidade ao nascer
 
-        # O corpo da cobra é uma lista de vetores. O índice 0 é a cabeça.
-        # Os segmentos nascem empilhados para baixo.
+        # O corpo nasce "para trás" baseado no vetor de direção
         self.segments: list[Vec] = [
-            Vec(start_pos.x, start_pos.y + (i * C.GRID_SIZE))
+            Vec(start_pos.x - (i * start_dir.x), start_pos.y - (i * start_dir.y))
             for i in range(C.STARTING_SEGMENTS)
         ]
 
-        # Começa movendo para cima (assumindo grid de 20px)
-        self.direction = Vec(0, -C.GRID_SIZE)
+        self.direction = Vec(start_dir)
         self.next_direction = self.direction
 
     def apply_command(self, cmd: PlayerCommand):
@@ -58,12 +57,9 @@ class Snake(Entity):
         self._sync_rect()
 
     def update(self, dt: float) -> None:
-        """Cumpre o contrato da Entity.
-
-        Como a movimentação do Snake é baseada em "passos" (steps) pela grade,
-        o update contínuo pode ficar vazio ou ser usado apenas para animações visuais.
-        """
-        pass
+        """Cumpre o contrato da Entity e decresce a invencibilidade a 60FPS."""
+        if getattr(self, "invuln_timer", 0) > 0:
+            self.invuln_timer -= dt
 
     def grow(self) -> None:
         """Adiciona um novo segmento na posição da cauda atual."""
